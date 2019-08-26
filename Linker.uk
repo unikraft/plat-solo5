@@ -1,0 +1,61 @@
+ifeq (x86_64,$(CONFIG_UK_ARCH))
+SOLO5_LDSCRIPT  := $(LIBSOLO5PLAT_BASE)/link64.lds
+SOLO5_LDFLAGS-y += -Wl,-m,elf_x86_64
+else ifeq (arm64,$(CONFIG_UK_ARCH))
+##
+## Currently only support generate little endian aarch64 output format
+##
+SOLO5_LDSCRIPT  := $(LIBSOLO5PLAT_BASE)/link64.lds
+SOLO5_LDFLAGS-y	 += -Wl,-m,aarch64elf
+endif
+
+##
+## Link image
+##
+SOLO5_IMAGE := $(BUILD_DIR)/$(CONFIG_UK_NAME)_solo5-$(CONFIG_UK_ARCH)
+EXTRA_LD_SCRIPT_FLAGS := $(addprefix -Wl$(comma)-T,$(EXTRA_LD_SCRIPT-y))
+
+$(SOLO5_IMAGE): $(SOLO5_ALIBS) $(SOLO5_ALIBS-y) $(SOLO5_OLIBS) $(SOLO5_OLIBS-y) \
+              $(UK_ALIBS) $(UK_ALIBS-y) $(UK_OLIBS) $(UK_OLIBS-y) \
+              $(SOLO5_LDSCRIPT) $(SOLO5_HVT_BINDING)
+	$(call build_cmd,LD,,$@.ld.o,\
+	       $(LD) -r $(LIBLDFLAGS) $(LIBLDFLAGS-y) \
+			$(SOLO5_LDFLAGS) $(SOLO5_LDFLAGS-y) \
+			$(SOLO5_OLIBS) $(SOLO5_OLIBS-y) \
+			$(UK_OLIBS) $(UK_OLIBS-y) \
+			-Wl$(comma)--start-group \
+			$(SOLO5_ALIBS) $(SOLO5_ALIBS-y) \
+			$(UK_ALIBS) $(UK_ALIBS-y) \
+			-Wl$(comma)--end-group \
+			-o $@.ld.o)
+	$(call build_cmd,OBJCOPY,,$@.o,\
+               $(OBJCOPY) -w -G solo5_app_main $@.ld.o $@.o)
+ifneq ($(filter x86_64 arm64,$(CONFIG_UK_ARCH)),)
+	$(call build_cmd,LD,,$@,\
+	       $(LD) $(LDFLAGS) $(LDFLAGS-y) \
+		     $(SOLO5_LDFLAGS) $(SOLO5_LDFLAGS-y) \
+		     -Wl$(comma)-dT$(comma)$(call strip,$(SOLO5_LDSCRIPT)) \
+		     $(EXTRA_LD_SCRIPT_FLAGS) \
+		     $@.o $(SOLO5_HVT_BINDING) -o $@)
+ifeq ($(CONFIG_OPTIMIZE_DBGFILE),y)
+	$(call build_cmd,OBJCOPY,,$@.dbg,\
+	       $(OBJCOPY) --only-keep-debug $@ $@.dbg)
+endif
+ifeq ($(CONFIG_OPTIMIZE_SYMFILE),y)
+	$(call build_cmd,NM,,$@.sym,\
+	       $(NM) -n $@ > $@.sym)
+endif
+	$(call build_cmd,GZ,,$@.gz,\
+	       $(GZIP) -f -9 -c $@ >$@.gz)
+endif
+
+# register image to the build
+UK_IMAGES-$(CONFIG_PLAT_SOLO5) += $(SOLO5_IMAGE)
+
+# ...for cleaning:
+LIBSOLO5PLAT_CLEAN += $(call build_clean,$(SOLO5_IMAGE))
+LIBSOLO5PLAT_CLEAN += $(call build_clean,$(SOLO5_IMAGE).gz)
+LIBSOLO5PLAT_CLEAN += $(call build_clean,$(SOLO5_IMAGE).dbg)
+LIBSOLO5PLAT_CLEAN += $(call build_clean,$(SOLO5_IMAGE).sym)
+LIBSOLO5PLAT_CLEAN += $(call build_clean,$(SOLO5_IMAGE).o)
+LIBSOLO5PLAT_CLEAN += $(call build_clean,$(SOLO5_IMAGE).ld.o)
