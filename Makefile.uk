@@ -1,0 +1,61 @@
+##
+## SOLO5 platform registration
+##
+$(eval $(call addplat_s,solo5,$(CONFIG_PLAT_SOLO5)))
+
+##
+## SOLO5 platform library registration
+##
+$(eval $(call addplatlib,solo5,libsolo5plat))
+
+##
+## Solo5 Sources
+##
+SOLO5_VERSION=0.4.1
+SOLO5_URL=https://github.com/Solo5/solo5/archive/v$(SOLO5_VERSION).zip
+$(eval $(call fetch,libsolo5,$(SOLO5_URL)))
+
+##
+## Helpers
+##
+SOLO5_SUBDIR=$(LIBSOLO5_ORIGIN)/solo5-$(SOLO5_VERSION)
+SOLO5_HVT_BINDING := $(SOLO5_SUBDIR)/bindings/hvt/solo5_hvt.o
+SOLO5_HVT_TENDER  := $(BUILD_DIR)/solo5-hvt
+
+##
+## Build solo5 hvt binding
+##
+$(SOLO5_HVT_BINDING):
+	## Currently, the Solo5 platform doesn't support LIBUKSCHED.
+	## This check should be removed once full support is ready.
+ifeq ($(findstring y,$(CONFIG_LIBUKSCHED)),y)
+	$(error "LIBUKSCHED is not supported on Solo5, please unselect it.")
+endif
+	$(MAKE) -C $(SOLO5_SUBDIR) hvt
+ifeq ($(findstring y,$(CONFIG_SOLO5_HVT_TENDER)),y)
+	## using the solo5 hvt tender with only the gdb module enabled
+	## will replace with normal tender after minor fix for the
+	## solo5 network/block module parameter checking
+	install -m 744 $(SOLO5_SUBDIR)/tests/test_hello/solo5-hvt $(BUILD_DIR)/solo5-hvt
+endif
+
+##
+## Platform library definitions
+##
+LIBSOLO5PLAT_ASINCLUDES-y        += -I$(LIBSOLO5PLAT_BASE)/include
+LIBSOLO5PLAT_ASINCLUDES-y        += -I$(UK_PLAT_COMMON_BASE)/include
+LIBSOLO5PLAT_CINCLUDES-y         += -I$(LIBSOLO5PLAT_BASE)/include
+LIBSOLO5PLAT_CINCLUDES-y         += -I$(UK_PLAT_COMMON_BASE)/include
+
+LIBSOLO5PLAT_ASFLAGS             += -DSOLO5PLAT
+LIBSOLO5PLAT_CFLAGS              += -DSOLO5PLAT
+LIBSOLO5PLAT_CXXFLAGS            += -DSOLO5PLAT
+
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/shutdown.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/memory.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/console.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/io.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/lcpu.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/setup.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/time.c
+LIBSOLO5PLAT_SRCS-y              += $(LIBSOLO5PLAT_BASE)/irq.c
