@@ -66,6 +66,12 @@ SECTIONS {
     }
     uk_ctortab_end = .;
 
+	uk_inittab_start = .;
+	.uk_inittab :
+	{
+		KEEP(*(SORT_BY_NAME(.uk_inittab_[1-6][0-9])))
+	}
+	uk_inittab_end = .;
 
     . = ALIGN(0x1000);
     /* Read-only data */
