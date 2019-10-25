@@ -3,8 +3,9 @@ solo5 for Unikraft
 
 Once the build process finished successfully, The solo5 monitor(**solo5-hvt**)
 as well as the corresponding app (for example, helloworld_solo5-x86_64) can be
-found in the `build` directory and run with: ::
+found in the `build` directory and run with:
 
+```
 ~/unikraft/apps/helloworld/build$ sudo ./solo5-hvt helloworld_solo5-x86_64
 solo5-hvt: helloworld_solo5-x86_64: Warning: phdr[0] requests WRITE and EXEC permissions
             |      ___|
@@ -26,10 +27,12 @@ Hello world!
 Arguments:
 Solo5: solo5_exit(0) called
 ~/unikraft/apps/helloworld/build$
+```
 
 The syntax of the **solo5-hvt** command is listed below, and you can also refer to
 the solo5 project main page(https://github.com/Solo5/solo5) for more information ::
 
+```
 usage: solo5-hvt [ CORE OPTIONS ] [ MODULE OPTIONS ] [ -- ] KERNEL [ ARGS ]
 KERNEL is the filename of the unikernel to run.
 ARGS are optional arguments passed to the unikernel.
@@ -44,8 +47,7 @@ Compiled-in module options:
     [ --net-mac=HWADDR ] (guest MAC address)
     --gdb (optional flag for running in a gdb debug session)
     [ --gdb-port=1234 ] (port to use)
-
+```
 
 Please also refer to the `README.md` as well as the documentation in the `doc/`
 subdirectory of the main unikraft repository.
-
